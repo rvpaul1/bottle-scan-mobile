@@ -1,0 +1,257 @@
+import { BottleStatus, GetBottleResponseDto, UpdateBottleRequestDto } from "@/globals";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native"
+
+export default function Scan() {
+    const searchParams = useLocalSearchParams();
+    const id = searchParams.id;
+
+    const [bottle, setBottle] = useState<GetBottleResponseDto>();
+
+    useEffect(() => {
+        fetch(
+            `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${id}`,
+            {
+                method: 'GET',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        ).then((response: Response) => response.json())
+            .then(json => setBottle(json as GetBottleResponseDto));
+    }, [id, setBottle]);
+
+    let options = <Text>Loading...</Text>;
+
+    if (bottle !== undefined) {
+        options = (
+            <BottleInfo
+                bottle={bottle}
+            ></BottleInfo>
+        );
+    }
+
+    return (
+        <View className="h-screen w-screen flex flex-col justify-center">
+            <View className="flex w-full justify-center">
+                {options}
+            </View>
+        </View>
+    )
+}
+
+interface BottleInfoParams {
+    bottle: GetBottleResponseDto;
+}
+
+function BottleInfo(params: BottleInfoParams) {
+    const {
+        bottle,
+    } = params;
+
+    const router = useRouter();
+
+    const [oz, setOz] = useState<number>(bottle.capacityInOunces - bottle.volInOunces);
+
+    const handleOzChange = useCallback((numberAsText: string) => {
+        setOz(parseFloat(numberAsText));
+    }, [setOz]);
+
+    const updateBottle = useCallback(async (status: BottleStatus) => {
+
+        const requestDto = {
+            volInOunces: oz,
+            status: status,
+            expirationTimestamp: getExpirationTimestampFromStatus(status),
+        } as UpdateBottleRequestDto;
+
+        // TODO Handle failure gracefully
+        await fetch(
+            `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${bottle.id}`,
+            {
+                method: 'PUT',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestDto),
+            }
+        )
+        router.push(`/index`);
+    }, [oz]);
+
+    return (
+        <View className="bg-black justify-center flex h-screen">
+            <View className="flex flex-col justify-between items-center w-full px-[15px] bg-black">
+                <Text className="text-xl text-white">Bottle Info:</Text>
+                <View className="h-[40px]"></View>
+                <Text className="text-xs text-white">Name</Text>
+                <Text className="text-3xl text-white">{bottle.nickname}</Text>
+                <View className="h-[40px]"></View>
+                <Text className="text-xs text-white">Status</Text>
+                {bottle.status === BottleStatus.AVAILABLE &&
+                    <Text className="text-xl text-white">empty (capacity {bottle.capacityInOunces} oz)</Text>}
+                {bottle.status === BottleStatus.REFRIGERATOR &&
+                    <Text className="text-xl text-white">{bottle.volInOunces} oz in refrigerator (capacity {bottle.capacityInOunces} oz)</Text>}
+                <View className="h-[40px]"></View>
+                {bottle.volInOunces > 0 && <>
+                    <Text className="text-xl text-white">
+                        Expires in <Timer countdownDate={new Date(bottle.expirationTimestamp)}></Timer>
+                    </Text>
+                    <View className="h-[40px]"></View></>}
+                {bottle.capacityInOunces - bottle.volInOunces > 0 &&
+                    <View className="flex justify-between">
+                        <View className="w-full h-full flex flex-col justify-center text-center">
+                            <Text className="text-white">Fill (oz)?</Text>
+                        </View>
+                        <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
+                    </View>}
+                <View className="h-[40px]"></View>
+                <View className="w-full flex justify-between">
+                    <BottleInfoButtons
+                        bottle={bottle}
+                        updateBottle={updateBottle}
+                    ></BottleInfoButtons>
+                </View>
+            </View>
+        </View>
+    );
+}
+
+
+interface BottleInfoButtonParams {
+    bottle: GetBottleResponseDto;
+    updateBottle: (status: BottleStatus) => Promise<void>;
+}
+
+function BottleInfoButtons(params: BottleInfoButtonParams) {
+    const { updateBottle, bottle } = params;
+
+    switch (bottle.status) {
+        case BottleStatus.AVAILABLE:
+            return (
+                <>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.REFRIGERATOR)}
+                        buttonText="Refrigerate"
+                    ></UpdateBottleButton>
+                    <View className="w-[30px]"></View>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.FRESH)}
+                        buttonText="Leave Out"
+                    ></UpdateBottleButton>
+                </>
+            );
+        case BottleStatus.REFRIGERATOR:
+            return (
+                <>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.IN_USE)}
+                        buttonText="Feed"
+                    ></UpdateBottleButton>
+                    {bottle.capacityInOunces > bottle.volInOunces &&
+                        <>
+                            <View className="w-[30px]"></View>
+                            <UpdateBottleButton
+                                onPress={() => updateBottle(BottleStatus.FRESH)}
+                                buttonText="Fill"
+                            ></UpdateBottleButton>
+                        </>}
+                </>
+            )
+        case BottleStatus.FRESH:
+            return (
+                <>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.REFRIGERATOR)}
+                        buttonText="Refrigerate"
+                    ></UpdateBottleButton>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.IN_USE)}
+                        buttonText="Feed"
+                    ></UpdateBottleButton>
+                </>
+            );
+        case BottleStatus.IN_USE:
+            return (
+                <>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.IN_USE)}
+                        buttonText="Add an Ounce"
+                    ></UpdateBottleButton>
+                </>
+            );
+        default: throw new Error("Wrong");
+    }
+}
+
+interface UpdateBottleButtonParams {
+    onPress: () => Promise<void>;
+    buttonText: string;
+}
+
+function UpdateBottleButton(params: UpdateBottleButtonParams) {
+    const { onPress, buttonText } = params;
+
+    return <Pressable onPress={onPress} className="bg-lime-600 w-full h-[80px] grow rounded-lg flex justify-center items-center">
+        <Text className="text-2xl text-white">{buttonText}</Text>
+    </Pressable>;
+}
+
+function Timer(props: { countdownDate: Date; }) {
+    const { countdownDate } = props;
+
+    const [time, setTime] = useState<{ days: number, hours: number, minutes: number, seconds: number, }>();
+    const [expired, setExpired] = useState<boolean>(false);
+
+    useEffect(() => {
+        setInterval(() => {
+            const now = new Date().getTime();
+            const distance = countdownDate.getTime() - now;
+            if (distance <= 0) {
+                setExpired(true);
+            } else {
+                const days = Math.floor((distance) / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                setTime({ days, hours, minutes, seconds });
+            }
+        }, 1000)
+    }, [countdownDate, setTime]);
+
+    // TODO Add expired, format
+    return time ? <Text>{time.days}d {time.hours}h {time.minutes}m {time.seconds}s</Text> : <></>;
+}
+
+function getExpirationTimestampFromStatus(status: BottleStatus): Date | null {
+    switch (status) {
+        case BottleStatus.FRESH: return fourHours(); break;
+        case BottleStatus.IN_USE: return twoHours(); break;
+        case BottleStatus.REFRIGERATOR: return fourDays(); break;
+        default: return null;
+    }
+}
+
+function twoHours(): Date {
+    const twoHoursInMillis = 2 * 60 * 60 * 1000;
+    return nowPlusTime(twoHoursInMillis);
+}
+
+function fourHours(): Date {
+    const fourHoursInMillis = 4 * 60 * 60 * 1000;
+    return nowPlusTime(fourHoursInMillis);
+}
+
+function fourDays(): Date {
+    const fourDaysInMillis = 4 * 24 * 60 * 60 * 1000;
+    return nowPlusTime(fourDaysInMillis);
+}
+
+function nowPlusTime(time: number): Date {
+    const date = new Date(Date.now() + time);
+    console.log(date);
+    return date;
+}
