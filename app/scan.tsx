@@ -101,11 +101,19 @@ function BottleInfo(params: BottleInfoParams) {
                         Expires in <Timer countdownDate={new Date(bottle.expirationTimestamp)}></Timer>
                     </Text>
                     <View className="h-[40px]"></View></>}
-                <View className="flex flex-row justify-between w-full">
-                    <View className="flex flex-col justify-center w-1/2">
-                        <Text className="w-full text-center text-white">Fill (oz)?</Text>
-                    </View>
-                    <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 w-1/2 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
+                {bottle.capacityInOunces - bottle.volInOunces > 0 &&
+                    <View className="flex flex-row justify-between w-full">
+                        <View className="flex flex-col justify-center w-1/2">
+                            <Text className="w-full text-center text-white">Fill (oz)?</Text>
+                        </View>
+                        <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 w-1/2 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
+                    </View>}
+                <View className="h-[40px]"></View>
+                <View className="w-full">
+                    <BottleInfoButtons
+                        bottle={bottle}
+                        updateBottle={updateBottle}
+                    ></BottleInfoButtons>
                 </View>
             </View>
         </View>
@@ -135,12 +143,12 @@ function BottleInfo(params: BottleInfoParams) {
         //     <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
         // </View>}
         //         <View className="h-[40px]"></View>
-        //         <View className="w-full flex justify-between">
-        //             <BottleInfoButtons
-        //                 bottle={bottle}
-        //                 updateBottle={updateBottle}
-        //             ></BottleInfoButtons>
-        //         </View>
+                // <View className="w-full flex justify-between">
+                //     <BottleInfoButtons
+                //         bottle={bottle}
+                //         updateBottle={updateBottle}
+                //     ></BottleInfoButtons>
+                // </View>
         //     </View>
         // </View>
     );
@@ -158,7 +166,7 @@ function BottleInfoButtons(params: BottleInfoButtonParams) {
     switch (bottle.status) {
         case BottleStatus.AVAILABLE:
             return (
-                <>
+                <View className="w-full flex flex-row justify-between">
                     <UpdateBottleButton
                         onPress={() => updateBottle(BottleStatus.REFRIGERATOR)}
                         buttonText="Refrigerate"
@@ -168,7 +176,7 @@ function BottleInfoButtons(params: BottleInfoButtonParams) {
                         onPress={() => updateBottle(BottleStatus.FRESH)}
                         buttonText="Leave Out"
                     ></UpdateBottleButton>
-                </>
+                </View>
             );
         case BottleStatus.REFRIGERATOR:
             return (
@@ -221,7 +229,7 @@ interface UpdateBottleButtonParams {
 function UpdateBottleButton(params: UpdateBottleButtonParams) {
     const { onPress, buttonText } = params;
 
-    return <Pressable onPress={onPress} className="bg-lime-600 w-full h-[80px] grow rounded-lg flex justify-center items-center">
+    return <Pressable onPress={onPress} className="bg-lime-600 h-[80px] grow rounded-lg flex justify-center items-center">
         <Text className="text-2xl text-white">{buttonText}</Text>
     </Pressable>;
 }
