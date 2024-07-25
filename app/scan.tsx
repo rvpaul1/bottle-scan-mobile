@@ -59,12 +59,12 @@ function BottleInfo(params: BottleInfoParams) {
         setOz(parseFloat(numberAsText));
     }, [setOz]);
 
-    const updateBottle = useCallback(async (status: BottleStatus) => {
+    const updateBottle = useCallback(async (status: BottleStatus, ozToAdd = 0, resetExpirationTimestamp = true) => {
 
         const requestDto = {
-            volInOunces: oz,
+            volInOunces: bottle.volInOunces + oz + ozToAdd,
             status: status,
-            expirationTimestamp: getExpirationTimestampFromStatus(status),
+            expirationTimestamp: resetExpirationTimestamp ? getExpirationTimestampFromStatus(status) : undefined,
         } as UpdateBottleRequestDto;
 
         // TODO Handle failure gracefully
@@ -78,9 +78,9 @@ function BottleInfo(params: BottleInfoParams) {
                 },
                 body: JSON.stringify(requestDto),
             }
-        )
-        router.push(`/index`);
-    }, [oz]);
+        );
+        router.back();
+    }, [oz, bottle]);
 
     return (
         <View className="bg-black flex flex-col h-full">
@@ -117,47 +117,13 @@ function BottleInfo(params: BottleInfoParams) {
                 </View>
             </View>
         </View>
-        // <View className="bg-black justify-center flex flex-col h-full">
-        //     <View className="flex flex-col justify-between items-center w-full px-[15px] bg-black h-fit">
-        //         <Text className="text-xl ">Bottle Info:</Text>
-        //         <View className="h-[40px]"></View>
-        //         <Text className="text-xs text-white">Name</Text>
-        //         <Text className="text-3xl text-white">{bottle.nickname}</Text>
-        //         <View className="h-[40px]"></View>
-        //         <Text className="text-xs text-white">Status</Text>
-        //         {bottle.status === BottleStatus.AVAILABLE &&
-        //             <Text className="text-xl text-white">empty (capacity {bottle.capacityInOunces} oz)</Text>}
-        //         {bottle.status === BottleStatus.REFRIGERATOR &&
-        //             <Text className="text-xl text-white">{bottle.volInOunces} oz in refrigerator (capacity {bottle.capacityInOunces} oz)</Text>}
-        //         <View className="h-[40px]"></View>
-        //         {bottle.volInOunces > 0 && <>
-        //             <Text className="text-xl text-white">
-        //                 Expires in <Timer countdownDate={new Date(bottle.expirationTimestamp)}></Timer>
-        //             </Text>
-        //             <View className="h-[40px]"></View></>}
-        //         {bottle.capacityInOunces - bottle.volInOunces > 0 &&
-        // <View className="flex justify-between">
-        //     <View className="w-full h-full flex flex-col justify-center text-center">
-        //         <Text className="text-white">Fill (oz)?</Text>
-        //     </View>
-        //     <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
-        // </View>}
-        //         <View className="h-[40px]"></View>
-                // <View className="w-full flex justify-between">
-                //     <BottleInfoButtons
-                //         bottle={bottle}
-                //         updateBottle={updateBottle}
-                //     ></BottleInfoButtons>
-                // </View>
-        //     </View>
-        // </View>
     );
 }
 
 
 interface BottleInfoButtonParams {
     bottle: GetBottleResponseDto;
-    updateBottle: (status: BottleStatus) => Promise<void>;
+    updateBottle: (status: BottleStatus, ozToAdd?: number, resetExpirationTimestamp?: boolean) => Promise<void>;
 }
 
 function BottleInfoButtons(params: BottleInfoButtonParams) {
@@ -208,15 +174,20 @@ function BottleInfoButtons(params: BottleInfoButtonParams) {
                     ></UpdateBottleButton>
                 </>
             );
-        // case BottleStatus.IN_USE:
-        //     return (
-        //         <>
-        //             <UpdateBottleButton
-        //                 onPress={() => updateBottle(BottleStatus.IN_USE)}
-        //                 buttonText="Add an Ounce"
-        //             ></UpdateBottleButton>
-        //         </>
-        //     );
+        case BottleStatus.IN_USE:
+            return (
+                <View className="w-full flex flex-row justify-between">
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.IN_USE, 1, false)}
+                        buttonText="Add an Ounce"
+                    ></UpdateBottleButton>
+                    <View className="w-[30px]"></View>
+                    <UpdateBottleButton
+                        onPress={() => updateBottle(BottleStatus.AVAILABLE, -1 * bottle.volInOunces)}
+                        buttonText="Finished"
+                    ></UpdateBottleButton>
+                </View>
+            );
         default: throw new Error("Wrong");
     }
 }

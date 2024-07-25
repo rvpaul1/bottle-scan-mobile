@@ -6,6 +6,13 @@ export const enum BottleStatus {
     FRESH = "FRESH",
 }
 
+export const enum BottleSectionTitles {
+    IN_USE = "Bottles in Use",
+    FRESH = "Bottles Out",
+    REFRIGERATOR = "Bottles in Fridge",
+    AVAILABLE = "Bottles Available to Fill",
+}
+
 export interface GetBottleResponseDto {
     id: string;
     nickname: string;
@@ -16,10 +23,6 @@ export interface GetBottleResponseDto {
     capacityInOunces: number;
 }
 
-export interface DashboardDataDto {
-    bottles: GetBottleResponseDto[];
-}
-
 export interface UpdateBottleRequestDto {
     status: BottleStatus;
     volInOunces: number;
@@ -28,9 +31,18 @@ export interface UpdateBottleRequestDto {
 
 export interface DashboardData {
     lastFeed: Date;
-    lastPump: Date;
+    lastBottleFilled: Date;
     ozInFridge: number;
     bottlesInUse: GetBottleResponseDto[];
     bottlesOut: GetBottleResponseDto[];
-
+    bottlesInFridge: GetBottleResponseDto[];
+    bottlesAvailable: GetBottleResponseDto[];
 }
+
+export interface GetDashboardResponseDto {
+    id: string;
+    bottles: GetBottleResponseDto[];
+    lastFeed: Date;
+    lastBottleFilled: Date;
+}
+
