@@ -54,12 +54,23 @@ export default function Index() {
 }
 
 function BottleSectionItem(props: { bottle: GetBottleResponseDto }) {
-  return <Text className="text-xl text-white">{props.bottle.nickname}</Text>;
+  return (
+    <View className="h-[80px] bg-slate-900 pl-[5px] flex-row justify-between items-center border-white border-solid border-b-[1px]">
+      <Text className="text-xl text-white">{props.bottle.nickname}</Text>
+      <Link
+        href={`/scan?id=${props.bottle.id}`}
+        className="bg-lime-600 h-3/5 rounded-lg text-xl text-white flex flex-col justify-center w-[100px]"
+      >
+        <Text className="p-auto">Info</Text>
+      </Link>
+    </View>
+  );
+  // return <Text className="text-xl text-white">{props.bottle.nickname}</Text>;
 }
 
 function BottleSectionHeader(props: {text: string, render: boolean}) {
   return (
-    <View className={`w-full ${props.render ? '' : 'hidden'}`}>
+    <View className={`w-full bg-slate-800 ${props.render ? '' : 'hidden'} border-solid border-[1px] border-white`}>
       <Text className="text-4xl text-white">{props.text}</Text>
     </View>
   );
