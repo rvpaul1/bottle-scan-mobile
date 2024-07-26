@@ -1,44 +1,50 @@
 import { BottleSectionTitles, BottleStatus, DashboardData, GetBottleResponseDto, GetDashboardResponseDto } from "@/globals";
-import { Link } from "expo-router";
-import { useEffect, useState } from "react";
-import { SectionList, Text, View } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect } from '@react-navigation/native';
+import { Button, Pressable, SectionList, Text, View } from "react-native";
 
 export default function Index() {
 
-  const [data, setData] = useState<DashboardData>();
+  const [dashboardData, setData] = useState<DashboardData>();
   const [sectionData, setSectionData] = useState<{ title: string, data: GetBottleResponseDto[] }[]>([]);
 
-  useEffect(() => {
-    fetch(
-      `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/dashboard?bottleId=6688496f4d481a21884bc8c2`,
-      {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
+  useFocusEffect(
+    useCallback(() => {
+      fetch(
+        `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/dashboard?bottleId=6688496f4d481a21884bc8c2`,
+        {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         }
-      }
-    ).then((response: Response) => response.json() as unknown as GetDashboardResponseDto)
-      .then((json: GetDashboardResponseDto) => {
-        const dashboardData = getDashboardData(json);
-        setData(dashboardData);
-        const sectionData = createSectionData(dashboardData);
-        setSectionData(sectionData);
-      })
-      .catch((e) => console.log('Error fetching response. ' + e));
-  }, [setData, setSectionData]);
+      ).then((response: Response) => response.json() as unknown as GetDashboardResponseDto)
+        .then((json: GetDashboardResponseDto) => {
+          const dashboardData = getDashboardData(json);
+          setData(dashboardData);
+          const sectionData = createSectionData(dashboardData);
+          setSectionData(sectionData);
+        })
+        .catch((e) => console.log('Error fetching response. ' + e));
+    }, [setData, setSectionData])
+  );
 
   return (
     // <View className="flex-1 justify-center items-center">
     <View className="bg-black h-full">
+      <AggregateDataView
+        data={dashboardData}
+      ></AggregateDataView>
       <SectionList
         sections={sectionData}
         keyExtractor={(item, index) => item.id + index}
-        extraData={data}
+        extraData={dashboardData}
         renderItem={({ item }) => (<BottleSectionItem
           bottle={item}
         ></BottleSectionItem>)}
-        renderSectionHeader={({section: {title, data}}) =>(
+        renderSectionHeader={({ section: { title, data } }) => (
           <BottleSectionHeader
             text={title}
             render={data.length >= 1}
@@ -47,38 +53,52 @@ export default function Index() {
         )}
       >
       </SectionList>
-      {/* <Text>Edit app/index.tsx to edit this screen.</Text>
-      <Link href={`/scan?id=6688496f4d481a21884bc8c2`}>Scan</Link> */}
     </View>
   );
+}
+
+function AggregateDataView(props: { data?: DashboardData }) {
+  const { data } = props;
+  if (data === undefined) {
+    return <></>;
+  } else {
+    return (
+      <View className="flex flex-col justify-around h-[200px]">
+        <Text className="text-white text-4xl text-center">Bottle Scan</Text>
+        <Text className="text-white text-xl">Oz in the Fridge: {data.ozInFridge}</Text>
+        <Text className="text-white text-xl">Last Feed: {new Date(data.lastFeed).toLocaleTimeString()}</Text>
+        <Text className="text-white text-xl">Last Bottle Filled: {new Date(data.lastBottleFilled).toLocaleTimeString()}</Text>
+        <View></View>
+      </View>
+    )
+  };
 }
 
 function BottleSectionItem(props: { bottle: GetBottleResponseDto }) {
+  const router = useRouter();
   return (
-    <View className="h-[80px] bg-slate-900 pl-[5px] flex-row justify-between items-center border-white border-solid border-b-[1px]">
+    <View className="h-[80px] bg-slate-900 px-[15px] flex-row justify-between items-center border-white border-solid border-b-[1px]">
       <Text className="text-xl text-white">{props.bottle.nickname}</Text>
-      <Link
-        href={`/scan?id=${props.bottle.id}`}
-        className="bg-lime-600 h-3/5 rounded-lg text-xl text-white flex flex-col justify-center w-[100px]"
+      <Pressable className="w-[100px] h-3/5 bg-lime-600 rounded-lg flex-row justify-center items-center"
+        onPress={() => router.push(`/scan?id=${props.bottle.id}`)}
       >
-        <Text className="p-auto">Info</Text>
-      </Link>
+        <Text className="text-xl text-white">Info</Text>
+      </Pressable>
     </View>
   );
-  // return <Text className="text-xl text-white">{props.bottle.nickname}</Text>;
 }
 
-function BottleSectionHeader(props: {text: string, render: boolean}) {
+function BottleSectionHeader(props: { text: string, render: boolean }) {
   return (
-    <View className={`w-full bg-slate-800 ${props.render ? '' : 'hidden'} border-solid border-[1px] border-white`}>
-      <Text className="text-4xl text-white">{props.text}</Text>
+    <View className={`w-full pl-[15px] bg-slate-800 ${props.render ? '' : 'hidden'} border-solid border-[1px] border-white`}>
+      <Text className="text-2xl text-white">{props.text}</Text>
     </View>
   );
 }
 
 function getDashboardData(dto: GetDashboardResponseDto) {
   const bottles = dto.bottles;
-  bottles.sort((a, b) => new Date(b.statusTimestamp).getTime() - new Date(a.statusTimestamp).getTime());
+  bottles.sort((a, b) => new Date(a.statusTimestamp).getTime() - new Date(b.statusTimestamp).getTime());
   const ozInFridge = bottles.map(bottle => bottle.volInOunces).reduce((a, b) => a + b);
   const bottlesInUse = bottles.filter(bottle => bottle.status === BottleStatus.IN_USE);
   const bottlesOut = bottles.filter(bottle => bottle.status === BottleStatus.FRESH);

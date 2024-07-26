@@ -95,6 +95,8 @@ function BottleInfo(params: BottleInfoParams) {
                     <Text className="text-xl text-white">empty (capacity {bottle.capacityInOunces} oz)</Text>}
                 {bottle.status === BottleStatus.REFRIGERATOR &&
                     <Text className="text-xl text-white">{bottle.volInOunces} oz in refrigerator (capacity {bottle.capacityInOunces} oz)</Text>}
+                {bottle.status === BottleStatus.IN_USE &&
+                    <Text className="text-xl text-white">{bottle.volInOunces} oz currently feeding</Text>}
                 <View className="h-[40px]"></View>
                 {bottle.volInOunces > 0 && <>
                     <Text className="text-xl text-white">
@@ -146,7 +148,7 @@ function BottleInfoButtons(params: BottleInfoButtonParams) {
             );
         case BottleStatus.REFRIGERATOR:
             return (
-                <>
+                <View className="w-full flex flex-row justify-between">
                     <UpdateBottleButton
                         onPress={() => updateBottle(BottleStatus.IN_USE)}
                         buttonText="Feed"
@@ -155,24 +157,25 @@ function BottleInfoButtons(params: BottleInfoButtonParams) {
                         <>
                             <View className="w-[30px]"></View>
                             <UpdateBottleButton
-                                onPress={() => updateBottle(BottleStatus.FRESH)}
+                                onPress={() => updateBottle(bottle.status, 0, false)}
                                 buttonText="Fill"
                             ></UpdateBottleButton>
                         </>}
-                </>
+                </View>
             )
         case BottleStatus.FRESH:
             return (
-                <>
+                <View className="w-full flex flex-row justify-between">
                     <UpdateBottleButton
                         onPress={() => updateBottle(BottleStatus.REFRIGERATOR)}
                         buttonText="Refrigerate"
                     ></UpdateBottleButton>
+                    <View className="w-[30px]"></View>
                     <UpdateBottleButton
                         onPress={() => updateBottle(BottleStatus.IN_USE)}
                         buttonText="Feed"
                     ></UpdateBottleButton>
-                </>
+                </View>
             );
         case BottleStatus.IN_USE:
             return (
@@ -257,6 +260,5 @@ function fourDays(): Date {
 
 function nowPlusTime(time: number): Date {
     const date = new Date(Date.now() + time);
-    console.log(date);
     return date;
 }
