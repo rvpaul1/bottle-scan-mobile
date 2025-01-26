@@ -1,8 +1,9 @@
 import { BottleSectionTitles, BottleStatus, DashboardData, GetBottleResponseDto, GetDashboardResponseDto } from "@/globals";
-import { Link, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import { useFocusEffect } from '@react-navigation/native';
-import { Button, Pressable, SectionList, Text, View } from "react-native";
+import { Pressable, SectionList, Text, View } from "react-native";
+import React from "react";
 
 export default function Index() {
 
@@ -13,6 +14,7 @@ export default function Index() {
     useCallback(() => {
       fetch(
         `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/dashboard?bottleId=6688496f4d481a21884bc8c2`,
+        // `https://api.downscribble.com/bottle-service/dashboard?bottleId=66a41bf695a1ac5f071f3956`,
         {
           method: 'GET',
           mode: 'cors',
@@ -32,7 +34,6 @@ export default function Index() {
   );
 
   return (
-    // <View className="flex-1 justify-center items-center">
     <View className="bg-black h-full">
       <AggregateDataView
         data={dashboardData}
@@ -77,7 +78,7 @@ function AggregateDataView(props: { data?: DashboardData }) {
 function BottleSectionItem(props: { bottle: GetBottleResponseDto }) {
   const router = useRouter();
   return (
-    <View className="h-[80px] bg-slate-900 px-[15px] flex-row justify-between items-center border-white border-solid border-b-[1px]">
+    <View className="h-[80px] bg-slate-900 px-[15px] flex-row justify-between items-center border-slate-300 border-solid border-b-[1px]">
       <Text className="text-xl text-white">{props.bottle.nickname}</Text>
       <Pressable className="w-[100px] h-3/5 bg-lime-600 rounded-lg flex-row justify-center items-center"
         onPress={() => router.push(`/scan?id=${props.bottle.id}`)}
@@ -90,7 +91,7 @@ function BottleSectionItem(props: { bottle: GetBottleResponseDto }) {
 
 function BottleSectionHeader(props: { text: string, render: boolean }) {
   return (
-    <View className={`w-full pl-[15px] bg-slate-800 ${props.render ? '' : 'hidden'} border-solid border-[1px] border-white`}>
+    <View className={`w-full pl-[15px] bg-slate-800 ${props.render ? '' : 'hidden'} border-solid border-[1px] border-slate-500`}>
       <Text className="text-2xl text-white">{props.text}</Text>
     </View>
   );

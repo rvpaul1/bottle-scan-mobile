@@ -1,17 +1,21 @@
 import { BottleStatus, GetBottleResponseDto, UpdateBottleRequestDto } from "@/globals";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRoute } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native"
 
 export default function Scan() {
-    const searchParams = useLocalSearchParams();
-    const id = searchParams.id;
 
     const [bottle, setBottle] = useState<GetBottleResponseDto>();
+
+    const route = useRoute();
+
+    const {id} = route.params as { id: string } || {};
 
     useEffect(() => {
         fetch(
             `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${id}`,
+            // `https://api.downscribble.com/bottle-service/bottle/${id}`,
             {
                 method: 'GET',
                 mode: 'cors',
@@ -67,9 +71,11 @@ function BottleInfo(params: BottleInfoParams) {
             expirationTimestamp: resetExpirationTimestamp ? getExpirationTimestampFromStatus(status) : undefined,
         } as UpdateBottleRequestDto;
 
+
         // TODO Handle failure gracefully
-        await fetch(
+        const result = await fetch(
             `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${bottle.id}`,
+            // `https://api.downscribble.com/bottle-service/bottle/${bottle.id}`,
             {
                 method: 'PUT',
                 mode: 'cors',
@@ -104,12 +110,12 @@ function BottleInfo(params: BottleInfoParams) {
                     </Text>
                     <View className="h-[40px]"></View></>}
                 {bottle.capacityInOunces - bottle.volInOunces > 0 &&
-                    <View className="flex flex-row justify-between w-full">
+                    (<View className="flex flex-row justify-between w-full">
                         <View className="flex flex-col justify-center w-1/2">
                             <Text className="w-full text-center text-white">Fill (oz)?</Text>
                         </View>
                         <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 w-1/2 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
-                    </View>}
+                    </View>)}
                 <View className="h-[40px]"></View>
                 <View className="w-full">
                     <BottleInfoButtons
