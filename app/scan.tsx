@@ -2,7 +2,7 @@ import { BottleStatus, GetBottleResponseDto, UpdateBottleRequestDto } from "@/gl
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native"
+import { Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from "react-native"
 
 export default function Scan() {
 
@@ -10,7 +10,7 @@ export default function Scan() {
 
     const route = useRoute();
 
-    const {id} = route.params as { id: string } || {};
+    const { id } = route.params as { id: string } || {};
 
     useEffect(() => {
         fetch(
@@ -89,42 +89,44 @@ function BottleInfo(params: BottleInfoParams) {
     }, [oz, bottle]);
 
     return (
-        <View className="bg-black flex flex-col h-full">
-            <View className="bg-black justify-center flex flex-col h-full items-center w-full px-[15px]">
-                <Text className="text-xl text-white">Bottle Info:</Text>
-                <View className="h-[40px]"></View>
-                <Text className="text-xs text-white">Name</Text>
-                <Text className="text-3xl text-white">{bottle.nickname}</Text>
-                <View className="h-[40px]"></View>
-                <Text className="text-xs text-white">Status</Text>
-                {bottle.status === BottleStatus.AVAILABLE &&
-                    <Text className="text-xl text-white">empty (capacity {bottle.capacityInOunces} oz)</Text>}
-                {bottle.status === BottleStatus.REFRIGERATOR &&
-                    <Text className="text-xl text-white">{bottle.volInOunces} oz in refrigerator (capacity {bottle.capacityInOunces} oz)</Text>}
-                {bottle.status === BottleStatus.IN_USE &&
-                    <Text className="text-xl text-white">{bottle.volInOunces} oz currently feeding</Text>}
-                <View className="h-[40px]"></View>
-                {bottle.volInOunces > 0 && <>
-                    <Text className="text-xl text-white">
-                        Expires in <Timer countdownDate={new Date(bottle.expirationTimestamp)}></Timer>
-                    </Text>
-                    <View className="h-[40px]"></View></>}
-                {bottle.capacityInOunces - bottle.volInOunces > 0 &&
-                    (<View className="flex flex-row justify-between w-full">
-                        <View className="flex flex-col justify-center w-1/2">
-                            <Text className="w-full text-center text-white">Fill (oz)?</Text>
-                        </View>
-                        <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 w-1/2 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
-                    </View>)}
-                <View className="h-[40px]"></View>
-                <View className="w-full">
-                    <BottleInfoButtons
-                        bottle={bottle}
-                        updateBottle={updateBottle}
-                    ></BottleInfoButtons>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View className="bg-black flex flex-col h-full">
+                <View className="bg-black justify-center flex flex-col h-full items-center w-full px-[15px]">
+                    <Text className="text-xl text-white">Bottle Info:</Text>
+                    <View className="h-[40px]"></View>
+                    <Text className="text-xs text-white">Name</Text>
+                    <Text className="text-3xl text-white">{bottle.nickname}</Text>
+                    <View className="h-[40px]"></View>
+                    <Text className="text-xs text-white">Status</Text>
+                    {bottle.status === BottleStatus.AVAILABLE &&
+                        <Text className="text-xl text-white">empty (capacity {bottle.capacityInOunces} oz)</Text>}
+                    {bottle.status === BottleStatus.REFRIGERATOR &&
+                        <Text className="text-xl text-white">{bottle.volInOunces} oz in refrigerator (capacity {bottle.capacityInOunces} oz)</Text>}
+                    {bottle.status === BottleStatus.IN_USE &&
+                        <Text className="text-xl text-white">{bottle.volInOunces} oz currently feeding</Text>}
+                    <View className="h-[40px]"></View>
+                    {bottle.volInOunces > 0 && <>
+                        <Text className="text-xl text-white">
+                            Expires in <Timer countdownDate={new Date(bottle.expirationTimestamp)}></Timer>
+                        </Text>
+                        <View className="h-[40px]"></View></>}
+                    {bottle.capacityInOunces - bottle.volInOunces > 0 &&
+                        (<View className="flex flex-row justify-between w-full">
+                            <View className="flex flex-col justify-center w-1/2">
+                                <Text className="w-full text-center text-white">Fill (oz)?</Text>
+                            </View>
+                            <TextInput keyboardType="numeric" onChangeText={handleOzChange} id="fill" defaultValue={`${bottle.capacityInOunces - bottle.volInOunces}`} className="bg-slate-800 w-1/2 rounded-lg text-white text-center h-[50px] text-xl"></TextInput>
+                        </View>)}
+                    <View className="h-[40px]"></View>
+                    <View className="w-full">
+                        <BottleInfoButtons
+                            bottle={bottle}
+                            updateBottle={updateBottle}
+                        ></BottleInfoButtons>
+                    </View>
                 </View>
             </View>
-        </View>
+        </TouchableWithoutFeedback>
     );
 }
 
