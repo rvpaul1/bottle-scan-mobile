@@ -2,7 +2,7 @@ import { BottleStatus, GetBottleResponseDto, UpdateBottleRequestDto } from "@/gl
 import { useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Keyboard, Pressable, Text, TextInput, TouchableWithoutFeedback, View } from "react-native"
+import { Keyboard, Pressable, ScrollView, Text, TextInput, TouchableWithoutFeedback, View } from "react-native"
 
 export default function Scan() {
 
@@ -14,7 +14,7 @@ export default function Scan() {
 
     useEffect(() => {
         fetch(
-            `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${id}`,
+            `${process.env.EXPO_PUBLIC_BOTTLES_PROTOCOL}://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${id}`,
             // `https://api.downscribble.com/bottle-service/bottle/${id}`,
             {
                 method: 'GET',
@@ -74,7 +74,7 @@ function BottleInfo(params: BottleInfoParams) {
 
         // TODO Handle failure gracefully
         const result = await fetch(
-            `http://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${bottle.id}`,
+            `${process.env.EXPO_PUBLIC_BOTTLES_PROTOCOL}://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/bottle/${bottle.id}`,
             // `https://api.downscribble.com/bottle-service/bottle/${bottle.id}`,
             {
                 method: 'PUT',
@@ -89,8 +89,8 @@ function BottleInfo(params: BottleInfoParams) {
     }, [oz, bottle]);
 
     return (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View className="bg-black flex flex-col h-full">
+        // <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView className="bg-black flex flex-col h-full" keyboardShouldPersistTaps="handled">
                 <View className="bg-black justify-center flex flex-col h-full items-center w-full px-[15px]">
                     <Text className="text-xl text-white">Bottle Info:</Text>
                     <View className="h-[40px]"></View>
@@ -125,8 +125,8 @@ function BottleInfo(params: BottleInfoParams) {
                         ></BottleInfoButtons>
                     </View>
                 </View>
-            </View>
-        </TouchableWithoutFeedback>
+            </ScrollView>
+        // </TouchableWithoutFeedback>
     );
 }
 

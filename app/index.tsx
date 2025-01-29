@@ -12,7 +12,6 @@ export default function Index() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log(`${process.env.EXPO_PUBLIC_BOTTLES_PROTOCOL}://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/dashboard?bottleId=${process.env.EXPO_PUBLIC_BOTTLES_ACCT_ID}`);
       fetch(
         `${process.env.EXPO_PUBLIC_BOTTLES_PROTOCOL}://${process.env.EXPO_PUBLIC_BOTTLES_HOST}/bottle-service/dashboard?bottleId=${process.env.EXPO_PUBLIC_BOTTLES_ACCT_ID}`,
         // `https://api.downscribble.com/bottle-service/dashboard?bottleId=66a41bf695a1ac5f071f3956`,
